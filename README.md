@@ -10,7 +10,25 @@ These bounding boxes are not inteded to be authoritative and may contain errors.
 https://spatialreference.org/ref/epsg/2772/
 
 
+## Load to PostGIS
 
+Download the SQL script and use `psql` to load.
+
+```bash
+wget https://raw.githubusercontent.com/rustprooflabs/srid-bbox/main/srid_bbox.sql
+psql -d pgosm -f srid_bbox.sql
+```
+
+
+## Load, not to PostGIS
+
+If using this data in GIS systems outside of PostGIS, download the GeoJSON for use.
+This data file was exported via QGIS 3.16 from the ``public.srid_units`` view filtered for rows with a bounding box defined.  The data is in SRID 3857.
+
+
+```
+wget https://raw.githubusercontent.com/rustprooflabs/srid-bbox/main/srid_bbox.geojson
+```
 
 ## Source to create the data
 
