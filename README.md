@@ -1,12 +1,22 @@
 # SRID Bounding Boxes
 
-This project scrapes the WGS84 Bounds from the https://spatialreference.org website
-in order to provide bounding box recommendations for SRID within PostGIS.
+This project provides bounding boxes for nearly 4,000 SRIDs found in PostGIS's
+`public.spatial_ref_sys` table.  The goal of this project is to make it easier to
+find a localized SRID for specific areas in specific units (meters, feet, decimal degrees)  The bounding boxes were collected from the defined
+WGS84 Bounds on the https://spatialreference.org website.
+
+These bounding boxes are not inteded to be authoritative and may contain errors.
 
 https://spatialreference.org/ref/epsg/2772/
 
-## Create Table
 
+
+
+## Source to create the data
+
+The code used below is here for reference.  If you want to use this data, follow the
+instructions above to load the results.  This code takes a number of hours to run 
+through.
 
 ```sql
 CREATE TABLE public.srid_bbox
@@ -31,7 +41,7 @@ Create view adapted from original Gist: https://gist.github.com/rustprooflabs/a8
 
 
 ```sql
-CREATE OR REPLACE VIEW public.srid_units AS
+CREATE VIEW public.srid_units AS
 SELECT srs.srid, CASE WHEN proj4text LIKE '%+units=%' THEN True 
 			ELSE False 
 			END AS units_set,
@@ -44,7 +54,8 @@ SELECT srs.srid, CASE WHEN proj4text LIKE '%+units=%' THEN True
 			ELSE 'Decimal Degrees'
 			END AS units,
 		proj4text, srtext,
-		bbox.geom
+		ST_Area(ST_Transform(bbox.geom, 4326)::GEOGRAPHY) AS geom_area,
+		bbox.geom AS geom
 	FROM public.spatial_ref_sys srs
 	LEFT JOIN public.srid_bbox bbox ON srs.srid = bbox.srid
 ;
@@ -65,7 +76,7 @@ Full list will take hours to iterate through.
 For loading back into PostGIS.
 
 ```bash
-pg_dump --table=srid_bbox --no-privileges > srid_bbox.sql
+pg_dump --table=srid_bbox --table=srid_units --no-privileges --no-owner > srid_bbox.sql
 ```
 
 
