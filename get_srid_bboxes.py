@@ -39,7 +39,11 @@ def get_srid_bbox(srid):
     soup = BeautifulSoup(response.content, 'lxml')
     found_text = soup.find(string='WGS84 Bounds')
     # The following <script> has the bbox data to easily extract
-    script_with_bbox = str(found_text.findAllNext('script', limit=1)[0])
+    try:
+        script_with_bbox = str(found_text.findAllNext('script', limit=1)[0])
+    except AttributeError:
+        print(f'Script not found for {srid}')
+        return None
 
     # Only parens in string seems to be around the bbox data needed
     # Remove first paren and preceeding text
@@ -125,7 +129,15 @@ VALUES (%(srid)s,
         """
         params = bbox
         params['srid'] = srid
-        db_result = conn.execute(sql_insert, params)
+        try:
+            db_result = conn.execute(sql_insert, params)
+        except:
+            # Not implementing proper error handling.  Error encounted was:
+            # psycopg2.errors.InternalError_: transform: tolerance condition error (-20)
+            #
+            # Using broad Exception handling to get the majority of SRIDs processed
+            print(f'DB Error with SRID {srid}')
+
     else:
         not_found += 1
 
